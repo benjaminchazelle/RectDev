@@ -1,0 +1,590 @@
+
+<meta charset="utf-8" />
+<form method="get" action="rectdev_ui.html">
+	<input type="submit" value="Selection" />
+</form>
+
+<canvas id="canvas" height="600" width="600"></canvas>
+<canvas id="result" height="600" width="600"></canvas>
+<hr />
+Algorithme de divison d'un polygone droit conçu par Benjamin Chazelle et Benjamin Saugues, étudiants à Lyon 1
+
+<script>
+
+Array.prototype._get = function (index, offset) {
+
+		if(offset == null)
+			offset = 0;
+		
+		var i = (parseInt(index) + parseInt(offset)) % this.length;
+		if(i < 0)
+			i += this.length;
+
+			console.log(i);
+		return this[i];
+	}
+	
+function getTopLeftVertex(_polygon) {
+	
+	var topLeftVertex = _polygon._get(0);
+	var topLeftVertex_index = 0;
+	
+	for(var i = 1, l = _polygon.length; i < l; i++) {
+		
+		var v = _polygon._get(i);
+		
+		if(v.y < topLeftVertex.y || (v.y == topLeftVertex.y && v.x < topLeftVertex.x)) {
+			topLeftVertex = v;	
+			topLeftVertex_index = i;
+			}
+		
+		}
+		
+	return topLeftVertex_index;
+	
+	}
+	
+if(false && typeof(Storage) !== "undefined" && "polygon" in sessionStorage && sessionStorage.polygon.length >= 4) {
+
+	points = JSON.parse(sessionStorage.polygon);
+}
+else {/*
+points = [
+	{"x":3,"y":0},
+	{"x":6,"y":0},
+	{"x":6,"y":1},
+	{"x":13,"y":1},
+	{"x":13,"y":2},
+	{"x":16,"y":2},
+	{"x":16,"y":3},
+	{"x":14,"y":3},
+	{"x":14,"y":6},
+	{"x":12,"y":6},
+	{"x":12,"y":5},
+	{"x":10,"y":5},
+	{"x":10,"y":4},
+	{"x":12,"y":4},
+	{"x":12,"y":2},
+	{"x":8,"y":2},
+	{"x":8,"y":5},
+	{"x":7,"y":5},
+	{"x":7,"y":2},
+	{"x":6,"y":2},
+	{"x":6,"y":7},
+	{"x":10,"y":7},
+	{"x":10,"y":10},
+	{"x":8,"y":10},
+	{"x":8,"y":12},
+	{"x":10,"y":12},
+	{"x":10,"y":14},
+	{"x":5,"y":14},
+	{"x":5,"y":12},
+	{"x":2,"y":12},
+	{"x":2,"y":14},
+	{"x":0,"y":14},
+	{"x":0,"y":10},
+	{"x":2,"y":10},
+	{"x":2,"y":8},
+	{"x":0,"y":8},
+	{"x":0,"y":4},
+	{"x":3,"y":4}
+];
+*/
+points = [ { x: 516, y: 341 },
+  { x: 516, y: 342 },
+  { x: 515, y: 342 },
+  { x: 515, y: 346 },
+  { x: 513, y: 346 },
+  { x: 513, y: 347 },
+  { x: 511, y: 347 },
+  { x: 511, y: 349 },
+  { x: 509, y: 349 },
+  { x: 509, y: 347 },
+  { x: 505, y: 347 },
+  { x: 505, y: 348 },
+  { x: 503, y: 348 },
+  { x: 503, y: 351 },
+  { x: 500, y: 351 },
+  { x: 500, y: 352 },
+  { x: 497, y: 352 },
+  { x: 497, y: 356 },
+  { x: 498, y: 356 },
+  { x: 498, y: 357 },
+  { x: 501, y: 357 },
+  { x: 501, y: 358 },
+  { x: 502, y: 358 },
+  { x: 502, y: 359 },
+  { x: 504, y: 359 },
+  { x: 504, y: 362 },
+  { x: 506, y: 362 },
+  { x: 506, y: 363 },
+  { x: 507, y: 363 },
+  { x: 507, y: 373 },
+  { x: 500, y: 373 },
+  { x: 500, y: 374 },
+  { x: 497, y: 374 },
+  { x: 497, y: 372 },
+  { x: 487, y: 372 },
+  { x: 487, y: 374 },
+  { x: 484, y: 374 },
+  { x: 484, y: 378 },
+  { x: 485, y: 378 },
+  { x: 485, y: 381 },
+  { x: 492, y: 381 },
+  { x: 492, y: 383 },
+  { x: 491, y: 383 },
+  { x: 491, y: 387 },
+  { x: 489, y: 387 },
+  { x: 489, y: 390 },
+  { x: 490, y: 390 },
+  { x: 490, y: 392 },
+  { x: 489, y: 392 },
+  { x: 489, y: 393 },
+  { x: 490, y: 393 },
+  { x: 490, y: 395 },
+  { x: 489, y: 395 },
+  { x: 489, y: 398 },
+  { x: 491, y: 398 },
+  { x: 491, y: 399 },
+  { x: 492, y: 399 },
+  { x: 492, y: 401 },
+  { x: 494, y: 401 },
+  { x: 494, y: 404 },
+  { x: 493, y: 404 },
+  { x: 493, y: 407 },
+  { x: 492, y: 407 },
+  { x: 492, y: 408 },
+  { x: 491, y: 408 },
+  { x: 491, y: 409 },
+  { x: 489, y: 409 },
+  { x: 489, y: 410 },
+  { x: 487, y: 410 },
+  { x: 487, y: 411 },
+  { x: 486, y: 411 },
+  { x: 486, y: 412 },
+  { x: 485, y: 412 },
+  { x: 485, y: 413 },
+  { x: 484, y: 413 },
+  { x: 484, y: 416 },
+  { x: 483, y: 416 },
+  { x: 483, y: 423 },
+  { x: 481, y: 423 },
+  { x: 481, y: 425 },
+  { x: 479, y: 425 },
+  { x: 479, y: 427 },
+  { x: 476, y: 427 },
+  { x: 476, y: 428 },
+  { x: 474, y: 428 },
+  { x: 474, y: 432 },
+  { x: 487, y: 432 },
+  { x: 487, y: 426 },
+  { x: 489, y: 426 },
+  { x: 489, y: 425 },
+  { x: 491, y: 425 },
+  { x: 491, y: 424 },
+  { x: 497, y: 424 },
+  { x: 497, y: 422 },
+  { x: 498, y: 422 },
+  { x: 498, y: 421 },
+  { x: 499, y: 421 },
+  { x: 499, y: 420 },
+  { x: 501, y: 420 },
+  { x: 501, y: 419 },
+  { x: 502, y: 419 },
+  { x: 502, y: 418 },
+  { x: 501, y: 418 },
+  { x: 501, y: 417 },
+  { x: 503, y: 417 },
+  { x: 503, y: 416 },
+  { x: 504, y: 416 },
+  { x: 504, y: 415 },
+  { x: 508, y: 415 },
+  { x: 508, y: 414 },
+  { x: 509, y: 414 },
+  { x: 509, y: 413 },
+  { x: 508, y: 413 },
+  { x: 508, y: 411 },
+  { x: 507, y: 411 },
+  { x: 507, y: 405 },
+  { x: 506, y: 405 },
+  { x: 506, y: 404 },
+  { x: 504, y: 404 },
+  { x: 504, y: 403 },
+  { x: 503, y: 403 },
+  { x: 503, y: 404 },
+  { x: 501, y: 404 },
+  { x: 501, y: 403 },
+  { x: 500, y: 403 },
+  { x: 500, y: 404 },
+  { x: 498, y: 404 },
+  { x: 498, y: 402 },
+  { x: 497, y: 402 },
+  { x: 497, y: 401 },
+  { x: 498, y: 401 },
+  { x: 498, y: 400 },
+  { x: 500, y: 400 },
+  { x: 500, y: 399 },
+  { x: 507, y: 399 },
+  { x: 507, y: 397 },
+  { x: 508, y: 397 },
+  { x: 508, y: 396 },
+  { x: 510, y: 396 },
+  { x: 510, y: 394 },
+  { x: 511, y: 394 },
+  { x: 511, y: 393 },
+  { x: 512, y: 393 },
+  { x: 512, y: 390 },
+  { x: 511, y: 390 },
+  { x: 511, y: 388 },
+  { x: 512, y: 388 },
+  { x: 512, y: 387 },
+  { x: 513, y: 387 },
+  { x: 513, y: 385 },
+  { x: 515, y: 385 },
+  { x: 515, y: 384 },
+  { x: 516, y: 384 },
+  { x: 516, y: 383 },
+  { x: 519, y: 383 },
+  { x: 519, y: 381 },
+  { x: 521, y: 381 },
+  { x: 521, y: 379 },
+  { x: 522, y: 379 },
+  { x: 522, y: 378 },
+  { x: 521, y: 378 },
+  { x: 521, y: 376 },
+  { x: 522, y: 376 },
+  { x: 522, y: 374 },
+  { x: 524, y: 374 },
+  { x: 524, y: 375 },
+  { x: 527, y: 375 },
+  { x: 527, y: 376 },
+  { x: 531, y: 376 },
+  { x: 531, y: 375 },
+  { x: 532, y: 375 },
+  { x: 532, y: 374 },
+  { x: 533, y: 374 },
+  { x: 533, y: 372 },
+  { x: 534, y: 372 },
+  { x: 534, y: 371 },
+  { x: 532, y: 371 },
+  { x: 532, y: 368 },
+  { x: 532, y: 363 },
+  { x: 531, y: 363 },
+  { x: 531, y: 359 },
+  { x: 532, y: 359 },
+  { x: 532, y: 358 },
+  { x: 533, y: 358 },
+  { x: 533, y: 355 },
+  { x: 534, y: 355 },
+  { x: 534, y: 353 },
+  { x: 535, y: 353 },
+  { x: 535, y: 350 },
+  { x: 534, y: 350 },
+  { x: 534, y: 349 },
+  { x: 531, y: 349 },
+  { x: 531, y: 348 },
+  { x: 527, y: 348 },
+  { x: 527, y: 347 },
+  { x: 526, y: 347 },
+  { x: 526, y: 346 },
+  { x: 524, y: 346 },
+  { x: 524, y: 345 },
+  { x: 522, y: 345 },
+  { x: 522, y: 344 },
+  { x: 521, y: 344 },
+  { x: 521, y: 343 },
+  { x: 520, y: 343 } ];
+
+for(i=0;i<points.length;i++) {
+	
+	points[i].x  -= 400;
+	points[i].x *= 3;
+
+	points[i].y -= 320;
+	points[i].y *= 3;	
+	}
+	
+points.reverse();
+	
+//points = [{"x":460,"y":520},{"x":400,"y":520},{"x":400,"y":420},{"x":180,"y":420},{"x":180,"y":520},{"x":120,"y":520},{"x":120,"y":360},{"x":240,"y":360},{"x":240,"y":260},{"x":120,"y":260},{"x":120,"y":100},{"x":180,"y":100},{"x":180,"y":200},{"x":260,"y":200},{"x":260,"y":180},{"x":240,"y":180},{"x":240,"y":100},{"x":340,"y":100},{"x":340,"y":180},{"x":320,"y":180},{"x":320,"y":200},{"x":400,"y":200},{"x":400,"y":100},{"x":460,"y":100},{"x":460,"y":260},{"x":340,"y":260},{"x":340,"y":360},{"x":460,"y":360}];
+
+
+}
+//points = [{"x":501,"y":461},{"x":143,"y":461},{"x":143,"y":282},{"x":426,"y":282},{"x":426,"y":243},{"x":143,"y":243},{"x":143,"y":105},{"x":268,"y":105},{"x":268,"y":178},{"x":344,"y":178},{"x":344,"y":105},{"x":501,"y":105},{"x":501,"y":341},{"x":288,"y":341},{"x":288,"y":386},{"x":501,"y":386}];
+console.log(points);
+console.log("yolo");
+var canvas = document.getElementById("canvas");
+context = canvas.getContext("2d");
+
+var result = document.getElementById("result");
+result_context = result.getContext("2d");
+
+result = [];
+
+
+
+function drawPolygon(context, _points, color) {
+
+	context.beginPath();
+	context.moveTo(_points[0].x, _points[0].y);
+
+	for(i=1;i<_points.length;i++) {
+		context.lineTo(_points[i].x, _points[i].y);	
+		}
+
+
+
+	context.lineWidth = 2;
+	context.strokeStyle = color;
+	context.fillStyle = "rgba(0, 0, 0, 0)";
+
+	context.closePath();
+	context.stroke();
+	context.fill();
+
+}
+
+function drawPoint(context, _point, color) {
+
+	context.fillStyle = color;
+	context.fillRect(_point.x,_point.y,8,8);
+	
+
+}
+
+function drawResult() {
+
+	result_context.clearRect(0, 0, canvas.width, canvas.height);
+	
+	color = "green";
+	console.log(result);
+	for(var i = 0;i < result.length; i++) {
+		console.log(result[i]);
+		alpha = result[i].alpha;
+		beta = result[i].beta;
+		
+		if(result.length-1 == i)
+			color = "black";
+		
+		drawPolygon(result_context, [{x:alpha.x,y:alpha.y}, {x:beta.x,y:alpha.y}, {x:beta.x,y:beta.y}, {x:alpha.x,y:beta.y}], color);
+	}
+
+}
+
+drawPolygon(context, points, "blue");
+
+//Chazelle Saugues Algorithm maggle
+
+progression = true;
+//sommet_courant = getTopLeftVertex(points) - 2;
+sommet_courant = 0;
+
+
+while (progression) {
+
+		drawResult();
+	context.clearRect(0, 0, canvas.width, canvas.height);
+	drawPolygon(context, points, "red");
+
+	a = points._get(sommet_courant, +0);
+	b = points._get(sommet_courant, +1);
+	c = points._get(sommet_courant, +2);
+	d = points._get(sommet_courant, +3);
+	e = points._get(sommet_courant, +4);
+	
+	//console.log(points);
+	//console.log(a, b, c, d);
+	
+	drawPoint(context, a, "red");
+	drawPoint(context, b, "green");
+	drawPoint(context, c, "black");
+	drawPoint(context, d, "blue");
+	drawPolygon(context, points, "red");
+	
+	//alert(sommet_courant);
+	sommet_courant++;
+	
+	pattern_U	  = (b.y == c.y && (a.y < b.y && d.y < c.y) );
+	pattern_U_inv = (b.y == c.y && (a.y > b.y && d.y > c.y) );
+	
+	pattern_C	  = (b.x == c.x && (a.x > b.x && d.x > c.x) );
+	pattern_C_inv = (b.x == c.x && (a.x < b.x && d.x < c.x) );
+	
+	ab_sup_pattern_U = Math.abs(b.y-a.y) > Math.abs(d.y-c.y);
+	ab_sup_pattern_C = Math.abs(b.x-a.x) > Math.abs(d.x-c.x);
+	
+	ab_eq_pattern_U = Math.abs(b.y-a.y) == Math.abs(d.y-c.y);
+	ab_eq_pattern_C = Math.abs(b.x-a.x) == Math.abs(d.x-c.x);
+	
+	pattern_ok = pattern_U || pattern_U_inv || pattern_C || pattern_C_inv;
+
+
+	if((pattern_U) && a.x < d.x)
+		continue;
+	if((pattern_U_inv) && a.x > d.x)
+		continue;
+	if((pattern_C) && a.y < d.y)
+		continue;
+	if((pattern_C_inv) && a.y > d.y)
+		continue;
+	//alert("yo");		
+		//forme U
+		if(pattern_U){
+			if(ab_sup_pattern_U){
+				phi = {x : a.x, y : d.y};
+				alpha = d;
+				beta = b;
+				//result.push({"alpha": alpha, "beta": beta});
+			}
+			else{
+				phi = {x : d.x, y : a.y};
+				alpha = phi;
+				beta = b;
+				//result.push({"alpha": alpha, "beta": beta});
+			}
+		}
+		else if(pattern_U_inv){
+			if(ab_sup_pattern_U){
+				phi = {x : a.x, y : d.y};
+				alpha = b;
+				beta = d;
+				//result.push({"alpha": alpha, "beta": beta});
+			}
+			else{
+				phi = {x : d.x, y : a.y};
+				alpha = b;
+				beta = phi;
+				//result.push({"alpha": alpha, "beta": beta});
+			}
+		}
+		
+		
+		
+		//forme C
+		else if(pattern_C){
+			if(ab_sup_pattern_C){
+				phi = {x : d.x, y : a.y};
+				alpha = c;
+				beta = phi;
+				//result.push({"alpha": alpha, "beta": beta});
+			}
+			else{
+				phi = {x : a.x, y : d.y};
+				alpha = c;
+				beta = a;
+				//result.push({"alpha": alpha, "beta": beta});
+			}
+		}
+		else if(pattern_C_inv){
+			if(ab_sup_pattern_C){
+				phi = {x : d.x, y : a.y};
+				alpha = phi;
+				beta = c;
+				//result.push({"alpha": alpha, "beta": beta});
+			}
+			else{
+				phi = {x : a.x, y : d.y};
+				alpha = a;
+				beta = c;
+				//result.push({"alpha": alpha, "beta": beta});
+			}
+		}
+	
+	
+	//condition aucun point dans le rectangle a découper
+
+	if(pattern_ok) {
+	inner = false;
+	
+	for(i=0;i<points.length;i++) {
+	
+		if(points[i] == a || points[i] == b || points[i] == c || points[i] == d || (points[i] == e && a.x == e.x && a.y == e.y))
+			continue;
+			
+		if(alpha.x <= points[i].x && points[i].x <= beta.x && alpha.y <= points[i].y && points[i].y <= beta.y) {
+			inner = true;
+			
+			//alert("dedans");
+			break;			
+			}
+			
+
+		}
+		
+		if(!inner){
+		
+			new_polygon = [];
+			
+				for(i=0;i<points.length;i++) {
+				
+				if((pattern_U || pattern_U_inv))
+					{
+					if(ab_sup_pattern_U) {
+						if(points[i] == b)
+							new_polygon.push(phi);
+						else if (points[i] != c && points[i] != d)
+							new_polygon.push(points[i]);
+						}
+					else if(ab_eq_pattern_U){
+						if (points[i] != a && points[i] != b && points[i] != c && points[i] != d)
+								new_polygon.push(points[i]);
+						}
+					else {
+						if(points[i] == a)
+							new_polygon.push(phi);
+						else if (points[i] != b && points[i] != c)
+							new_polygon.push(points[i]);
+						}
+
+					}
+				else if((pattern_C || pattern_C_inv))
+					{
+					
+					if(ab_sup_pattern_C) {
+						if(points[i] == b)
+							new_polygon.push(phi);
+						else if (points[i] != c && points[i] != d)
+							new_polygon.push(points[i]);
+						}
+					else if(ab_eq_pattern_C){
+						if (points[i] != a && points[i] != b && points[i] != c && points[i] != d)
+								new_polygon.push(points[i]);
+						}
+					else {
+						if(points[i] == a)
+							new_polygon.push(phi);
+						else if (points[i] != b && points[i] != c)
+							new_polygon.push(points[i]);
+						}
+
+					}
+				
+				}
+				
+			result.push({"alpha": alpha, "beta": beta});
+			
+			points = new_polygon;
+			
+
+			
+			//drawPolygon(context, [{x:alpha.x,y:alpha.y}, {x:beta.x,y:alpha.y}, {x:beta.x,y:beta.y}, {x:alpha.x,y:beta.y}], "red");
+			
+			sommet_courant --;
+			}
+
+	}
+		
+	if(points.length == 0){
+		progression = false;
+		alert("fin");
+		}
+	
+	}
+	
+
+		drawResult();
+	context.clearRect(0, 0, canvas.width, canvas.height);
+
+
+
+</script>

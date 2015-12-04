@@ -1,0 +1,422 @@
+<meta charset="utf-8" />
+<script src="gpc.js"></script>
+<script src="rectdev.js"></script>
+		
+
+<label>
+<input type="radio" name="mode" id="union" checked>Union</option>
+</label>
+<label>
+	<input type="radio" name="mode"  id="diff">Difference</option>
+</label>
+
+<label><input type="checkbox" id="magnetic" />Magnetic</label>
+<button id="undo">Undo</button>
+<button id="clear">Clear</button>
+<button id="run" disabled>Run</button>
+<br />
+<canvas id="canvas" height="600" width="600" style="border: 1px solid;"></canvas>
+<canvas id="result" height="600" width="600" style="border: 1px solid;"></canvas>
+<hr />
+Algorithme de divison d'un polygone droit conçu par Benjamin Chazelle et Benjamin Saugues, étudiants à Lyon 1
+
+<script>
+magnetic = false;
+
+totem = [{"x":459,"y":518},{"x":383,"y":518},{"x":383,"y":413},{"x":187,"y":413},{"x":187,"y":518},{"x":120,"y":518},{"x":120,"y":352},{"x":246,"y":352},{"x":246,"y":271},{"x":120,"y":271},{"x":120,"y":140},{"x":177,"y":140},{"x":177,"y":221},{"x":247,"y":221},{"x":247,"y":190},{"x":234,"y":190},{"x":234,"y":102},{"x":340,"y":102},{"x":340,"y":190},{"x":327,"y":190},{"x":327,"y":215},{"x":402,"y":215},{"x":402,"y":140},{"x":459,"y":140},{"x":459,"y":270},{"x":329,"y":270},{"x":329,"y":350},{"x":459,"y":350}];
+totem = [{"x":460,"y":540},{"x":440,"y":540},{"x":440,"y":520},{"x":420,"y":520},{"x":420,"y":540},{"x":400,"y":540},{"x":400,"y":520},{"x":380,"y":520},{"x":380,"y":500},{"x":400,"y":500},{"x":400,"y":440},{"x":380,"y":440},{"x":380,"y":420},{"x":200,"y":420},{"x":200,"y":440},{"x":180,"y":440},{"x":180,"y":500},{"x":200,"y":500},{"x":200,"y":520},{"x":180,"y":520},{"x":180,"y":540},{"x":160,"y":540},{"x":160,"y":520},{"x":140,"y":520},{"x":140,"y":540},{"x":120,"y":540},{"x":120,"y":520},{"x":100,"y":520},{"x":100,"y":500},{"x":120,"y":500},{"x":120,"y":380},{"x":140,"y":380},{"x":140,"y":360},{"x":240,"y":360},{"x":240,"y":280},{"x":200,"y":280},{"x":200,"y":260},{"x":140,"y":260},{"x":140,"y":240},{"x":120,"y":240},{"x":120,"y":120},{"x":100,"y":120},{"x":100,"y":100},{"x":120,"y":100},{"x":120,"y":60},{"x":140,"y":60},{"x":140,"y":100},{"x":160,"y":100},{"x":160,"y":60},{"x":180,"y":60},{"x":180,"y":100},{"x":200,"y":100},{"x":200,"y":120},{"x":180,"y":120},{"x":180,"y":180},{"x":200,"y":180},{"x":200,"y":200},{"x":260,"y":200},{"x":260,"y":180},{"x":240,"y":180},{"x":240,"y":120},{"x":260,"y":120},{"x":260,"y":100},{"x":320,"y":100},{"x":320,"y":120},{"x":340,"y":120},{"x":340,"y":180},{"x":320,"y":180},{"x":320,"y":200},{"x":380,"y":200},{"x":380,"y":180},{"x":400,"y":180},{"x":400,"y":120},{"x":380,"y":120},{"x":380,"y":100},{"x":400,"y":100},{"x":400,"y":60},{"x":420,"y":60},{"x":420,"y":100},{"x":440,"y":100},{"x":440,"y":60},{"x":460,"y":60},{"x":460,"y":100},{"x":480,"y":100},{"x":480,"y":120},{"x":460,"y":120},{"x":460,"y":240},{"x":440,"y":240},{"x":440,"y":260},{"x":380,"y":260},{"x":380,"y":280},{"x":340,"y":280},{"x":340,"y":360},{"x":440,"y":360},{"x":440,"y":380},{"x":460,"y":380},{"x":460,"y":500},{"x":480,"y":500},{"x":480,"y":520},{"x":460,"y":520}];
+
+
+var canvas=document.getElementById("canvas");
+var ctx = canvas.getContext('2d');
+
+var result=document.getElementById("result");
+var result_ctx = result.getContext('2d');
+
+if(typeof(Storage) !== "undefined") {
+document.getElementById("run").disabled = false;
+}
+
+document.getElementById("run").onclick = function () {
+
+if(typeof(Storage) !== "undefined") {
+	 sessionStorage.polygon = JSON.stringify(toRectdevPolygon(poly));
+	window.location = "rectdev_stepper.html";}
+};
+
+
+var PolyDefault = gpcas.geometry.PolyDefault ;
+var ArrayList = gpcas.util.ArrayList;
+var PolySimple = gpcas.geometry.PolySimple;
+var Clip = gpcas.geometry.Clip;
+var OperationType = gpcas.geometry.OperationType;
+var LmtTable = gpcas.geometry.LmtTable;
+var ScanBeamTreeEntries = gpcas.geometry.ScanBeamTreeEntries;
+var EdgeTable = gpcas.geometry.EdgeTable;
+var EdgeNode = gpcas.geometry.EdgeNode;
+var ScanBeamTree = gpcas.geometry.ScanBeamTree;
+var Rectangle = gpcas.geometry.Rectangle;
+var BundleState = gpcas.geometry.BundleState;
+var LmtNode = gpcas.geometry.LmtNode;
+var TopPolygonNode = gpcas.geometry.TopPolygonNode;
+var AetTree = gpcas.geometry.AetTree;
+var HState = gpcas.geometry.HState;
+var VertexType = gpcas.geometry.VertexType;
+var VertexNode = gpcas.geometry.VertexNode;
+var PolygonNode = gpcas.geometry.PolygonNode;
+var ItNodeTable = gpcas.geometry.ItNodeTable;
+var StNode = gpcas.geometry.StNode;
+var ItNode = gpcas.geometry.ItNode;
+
+result_squares = [];
+
+mode = 'none';
+pt_tl = -1;
+pt_br = -1;
+pt_br_tmp = -1;
+
+poly = new PolyDefault();
+
+for(var i=0 ; i < totem.length ; i++) {    
+	poly.addPoint(new Point(totem[i].x,totem[i].y));
+}
+
+poly_undo = poly;
+
+updateCanvas();
+
+function toRectdevPolygon(_poly) {
+
+var pts = poly.isEmpty() ? [] : poly.getPoints();
+var polygon = [];
+
+for(var i = 0; i < pts.length; i++) {
+	polygon.push({x :pts[i].x, y : pts[i].y});
+	
+}
+//alert(polygon);
+return polygon;
+}
+
+function drawPolygon(context, _points, color) {
+//console.log(_points);
+//console.log(context);
+
+	context.lineWidth = 6;
+	if(color == "transparent")
+		context.lineWidth /= 2;
+		
+	context.strokeStyle = "#000";
+	context.fillStyle = color;
+	context.beginPath();
+	context.moveTo(_points[0].x, _points[0].y);
+
+	for(i=1;i<_points.length;i++) {
+		context.lineTo(_points[i].x, _points[i].y);	
+		}
+
+
+
+
+
+	context.closePath();
+	context.stroke();
+	context.fill();
+
+}
+
+function updateCanvas() {
+
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+var polygon = toRectdevPolygon(poly);
+l = polygon.length;
+
+
+
+if(l > 0)
+{
+
+
+drawPolygon(ctx, polygon, '#F9BF3B');
+/*
+ctx.strokeStyle = "#000";
+ctx.lineWidth = 3;
+ctx.fillStyle = '#F9BF3B';
+ctx.beginPath();
+
+ctx.moveTo(polygon[0].x, polygon[0].y);
+
+for(var i = 1; i < l; i++) {
+	ctx.lineTo(polygon[i].x, polygon[i].y);
+}
+
+ctx.closePath();
+ctx.fill();
+ctx.stroke();*/
+}
+if(mode == 'union' || mode == 'diff') {
+	if(pt_tl != 1 && pt_br_tmp != 1) {
+
+	drawPolygon(ctx, [{x:pt_tl.x , y:pt_tl.y}, {x:pt_br_tmp.x , y:pt_tl.y}, {x:pt_br_tmp.x , y:pt_br_tmp.y}, {x:pt_tl.x , y:pt_br_tmp.y}, ], 'transparent');
+	/*ctx.beginPath();
+			ctx.moveTo(pt_tl.x, pt_tl.y);
+			ctx.lineTo(pt_br_tmp.x, pt_tl.y);
+			ctx.lineTo(pt_br_tmp.x, pt_br_tmp.y);
+			ctx.lineTo(pt_tl.x, pt_br_tmp.y);
+	ctx.closePath();
+	ctx.stroke();*/
+	}
+}
+updateResultCanvas();
+
+}
+
+function updateResultCanvas() {
+
+	result_ctx.clearRect(0, 0, canvas.width, canvas.height);
+	
+	colors = ["#FDE3A7", "#F89406", "#EB9532", "#E87E04", "#F4B350", "#F2784B", "#EB974E", "#F5AB35", "#F39C12"];
+	
+	color = "green";
+	//console.log(result_squares);
+	
+	//alert(result_squares.length);
+	
+	for(var i = 0;i < result_squares.length; i++) {
+		//console.log(result_squares[i]);
+		alpha = result_squares[i].alpha;
+		beta = result_squares[i].beta;
+	//	alert(i);
+		color = colors[i%colors.length];
+		
+		drawPolygon(result_ctx, [{x:alpha.x,y:alpha.y}, {x:beta.x,y:alpha.y}, {x:beta.x,y:beta.y}, {x:alpha.x,y:beta.y}], color);
+	}
+	
+}
+
+function computeResult () {
+
+		squarisable = toRectdevPolygon(poly);
+		
+		squarisable = optimizePolygon(squarisable);
+		
+		if(checkRightAngles(squarisable)) {
+			
+			//setClockwiseDeclaration(squarisable);
+			result_squares = ChazelleSaugues(squarisable);
+			
+
+			}
+		else {
+			alert("Moi je veux que des angles droits ! Je suis même pas sensé m'afficher é.è");
+		}
+
+		updateResultCanvas();
+
+}
+	
+function init_mode () {
+/*	document.getElementById('union').disabled = false;
+	document.getElementById('diff').disabled = false;
+	*/
+	//mode = 'none';
+	pt_tl = -1;
+	pt_br = -1;
+	
+	pt_br_tmp = -1;
+}
+
+init_mode();
+	mode = 'union';
+	//document.getElementById('union').disabled = true;
+	
+	computeResult();
+	
+document.getElementById('undo').disabled = true;
+
+document.getElementById('union').onclick = function () {
+	init_mode ();
+	
+	if(!this.disabled) {
+		//this.disabled =	true;
+		mode='union';
+		//document.getElementById('diff').disabled = false;
+		}
+
+};
+
+document.getElementById('diff').onclick = function () {
+	init_mode ();
+	
+	if(!this.disabled) {
+		//this.disabled =	true;
+		mode='diff';
+		//document.getElementById('union').disabled = false;
+		}
+
+};
+document.getElementById('magnetic').onclick = function () {
+
+	magnetic = !magnetic;
+	
+};
+document.getElementById('undo').onclick = function () {
+
+	poly = poly_undo;
+	computeResult();
+	updateCanvas();
+	updateResultCanvas();
+
+	this.disabled = true;
+	
+};
+
+document.getElementById('clear').onclick = function () {
+	poly_undo = poly;
+	poly = new PolyDefault();
+	updateCanvas();
+	computeResult();
+	updateResultCanvas();
+};
+
+document.getElementById('canvas').onmousemove = function (event) {
+
+    var x = new Number();
+    var y = new Number();
+    var canvas = document.getElementById("canvas");
+
+    if (event.x != undefined && event.y != undefined)
+    {
+      x = event.x;
+      y = event.y;
+    }
+    else // Firefox method to get the position
+    {
+      x = event.clientX + document.body.scrollLeft +
+          document.documentElement.scrollLeft;
+      y = event.clientY + document.body.scrollTop +
+          document.documentElement.scrollTop;
+    }
+
+    x -= canvas.offsetLeft;
+    y -= canvas.offsetTop;
+	
+	if(magnetic) {
+	x = 20 * Math.floor (x/20);
+	y = 20 * Math.floor (y/20);
+	}
+	
+	pt_br_tmp = {x:x, y:y};
+	
+	updateCanvas();
+}
+
+document.getElementById('canvas').onclick = function (event) {
+
+    var x = new Number();
+    var y = new Number();
+    var canvas = document.getElementById("canvas");
+
+    if (event.x != undefined && event.y != undefined)
+    {
+      x = event.x;
+      y = event.y;
+    }
+    else // Firefox method to get the position
+    {
+      x = event.clientX + document.body.scrollLeft +
+          document.documentElement.scrollLeft;
+      y = event.clientY + document.body.scrollTop +
+          document.documentElement.scrollTop;
+    }
+
+    x -= canvas.offsetLeft;
+    y -= canvas.offsetTop;
+	
+	if(mode != 'none') {
+		if(pt_tl == -1) {
+			pt_tl = {x:x, y:y};
+			pt_tl = pt_br_tmp;
+			}
+		else if(pt_br == -1) {
+			pt_br = {x:x, y:y};
+			pt_br = pt_br_tmp;
+			pt_br_tmp = -1;
+			polygonOperation();
+			}
+	}
+	
+};
+
+function polygonOperation () {
+
+
+	if(mode == 'union' || mode == 'diff') {
+
+
+
+		poly_undo = poly;
+		document.getElementById("undo").disabled = false;
+		
+		selection_poly =  new PolyDefault();
+			
+			selection_poly.addPoint(new Point(pt_tl.x, pt_tl.y));
+			selection_poly.addPoint(new Point(pt_br.x, pt_tl.y));
+			selection_poly.addPoint(new Point(pt_br.x, pt_br.y));
+			selection_poly.addPoint(new Point(pt_tl.x, pt_br.y));
+		
+
+		if(mode == 'union') {
+		
+			if(poly.isEmpty())
+				solution_poly = selection_poly;
+			else
+				solution_poly = poly.union(selection_poly);
+		}
+		else {
+			solution_poly = poly.difference(selection_poly);	
+		}
+		
+		
+
+		
+		//intersection = poly.intersection(selection_poly);
+				
+			
+		//poly = solution_poly;
+		//alert("go");
+		//polygon_solution = toRectdevPolygon(solution_poly);
+		poly = new PolyDefault();
+		//alert(solution_poly.getNumPoints() + " " + polygon_solution.length);
+		
+		for(var i=0, l=solution_poly.getNumPoints();i<l;i++) {
+			var p = solution_poly.getPoint(i);
+			poly.addPoint(p);
+		}
+			
+		//for(var i=0 ; i < polygon_solution.length ; i++)  
+		//	alert(i);
+		//	poly.addPoint(new Point(polygon_solution[i].x,polygon_solution[i].y));
+/*
+sss = toRectdevPolygon(solution_poly);
+poly = new PolyDefault();
+
+for(var i=0 ; i < sss.length ; i++) {    
+	poly.addPoint(new Point(sss[i].x,sss[i].y));
+}*/
+		
+		computeResult();
+		
+		
+		
+		updateCanvas();
+
+	}
+
+	init_mode ();
+	}
+
+
+
+</script>
